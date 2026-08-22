@@ -81,6 +81,33 @@ The body accepts more than the CLI exposes. `conversation_starters` has no
 directly or telling the human to use the web UI; see below for where they
 will find it.
 
+## Task identity tokens
+
+Separate from `custom_env`, an agent can be granted identity tokens for external
+systems. The deployment configures a catalog of templates
+(`MULTICA_TASK_TOKEN_TEMPLATES` + a signing key); an agent enables the subset it
+needs.
+
+- `GET /api/agents/{id}/task-tokens` returns the catalog (`available`) plus this
+  agent's enabled template ids (`enabled`). It never returns a token or any key
+  material — tokens exist only for the duration of a task run.
+- `PUT /api/agents/{id}/task-tokens` replaces the enabled set. Every id must
+  exist in the server-configured catalog; anything else is a 400. That check is
+  what keeps "which identities may be signed" in server configuration rather
+  than in whatever the caller can name.
+
+Authorization matches the env endpoints: agent actors are rejected outright, and
+the caller must be a workspace owner/admin or the agent's own human owner. Every
+write lands in `activity_log`.
+
+At claim time the server signs one token per enabled template for the run's
+accountable human and the daemon injects them under each template's env name.
+Nothing is issued when the run has no precise accountable human (`owner_fallback`
+/ `backfill` / `unattributed`) — those mean no person authorized the run.
+
+Unset catalog or key disables the whole feature: `available` is empty and the UI
+hides the tab.
+
 ## Copying an agent
 
 `multica agent copy <source-agent-id>` forks an existing agent's portable
@@ -110,7 +137,7 @@ multica agent copy <source-agent-id> --runtime-id <target> --model <model>  # cr
   different runtime drops them and REQUIRES `--model` (pass `--model ""` to
   accept the target runtime default), mirroring the web Duplicate clearing model
   on a runtime switch.
-- Never copied: `custom_env`, `mcp_config`, `runtime_config` (secret /
+- Never copied: `custom_env`, `mcp_config`, `runtime_config`, `task_token_templates` (secret /
   machine-local; redacted or masked on read anyway). Supply fresh values with
   the same secret-safe flags as `agent create` (`--custom-env*`, `--mcp-config*`,
   `--runtime-config`), or with `agent env set` after the copy exists.
