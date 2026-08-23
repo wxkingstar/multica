@@ -5,6 +5,7 @@ import {
   resolveLocaleFromSignals,
 } from "./lib/locale-routing";
 import { runtimeRewriteDestination } from "./config/runtime-urls";
+import { downloadRedirectDestination } from "./config/download-redirect";
 import { isOfficialMarketingHost } from "./lib/public-host";
 
 // Old workspace-scoped route segments that existed before the URL refactor
@@ -53,6 +54,18 @@ export function proxy(req: NextRequest) {
     const url = new URL(runtimeDestination);
     url.search = req.nextUrl.search;
     return NextResponse.rewrite(url);
+  }
+
+  // --- /download: hand off to the deployment's own distribution page ---
+  // Only when DOWNLOAD_REDIRECT_URL is set; see config/download-redirect.ts
+  // for why a self-host needs this and why it is resolved here rather than
+  // in next.config. 307 keeps it temporary — operators move the target.
+  const downloadDestination = downloadRedirectDestination(
+    pathname,
+    process.env,
+  );
+  if (downloadDestination) {
+    return NextResponse.redirect(downloadDestination, 307);
   }
 
   const hasSession = req.cookies.has("multica_logged_in");
