@@ -3,6 +3,7 @@ import { mkdtemp, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_RUNTIME_CONFIG } from "../shared/runtime-config";
 import { loadRuntimeConfig } from "./runtime-config-loader";
 
 describe("loadRuntimeConfig", () => {
@@ -35,7 +36,12 @@ describe("loadRuntimeConfig", () => {
     });
   });
 
-  it("uses cloud defaults when packaged config is absent", async () => {
+  // Asserts the wiring — absent file falls through to the compiled-in
+  // defaults — not what those defaults are. Pinning the literals here made
+  // this the test that breaks whenever a build changes its default endpoint,
+  // which is a supported thing to do; runtime-config.test.ts owns the shape
+  // of DEFAULT_RUNTIME_CONFIG itself.
+  it("uses the build's baked-in defaults when packaged config is absent", async () => {
     const dir = await mkdtemp(join(tmpdir(), "multica-desktop-config-"));
     await expect(
       loadRuntimeConfig({
@@ -45,12 +51,7 @@ describe("loadRuntimeConfig", () => {
       }),
     ).resolves.toEqual({
       ok: true,
-      config: {
-        schemaVersion: 1,
-        apiUrl: "https://api.multica.ai",
-        wsUrl: "wss://api.multica.ai/ws",
-        appUrl: "https://multica.ai",
-      },
+      config: { ...DEFAULT_RUNTIME_CONFIG },
     });
   });
 
