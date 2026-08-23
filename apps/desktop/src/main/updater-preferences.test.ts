@@ -7,6 +7,7 @@ import {
   loadUpdaterPreferences,
   saveUpdaterPreferences,
   updaterPreferencesPath,
+  DEFAULT_UPDATER_PREFERENCES,
 } from "./updater-preferences";
 
 const tempDirs: string[] = [];
@@ -24,16 +25,21 @@ afterEach(async () => {
 });
 
 describe("updater preferences", () => {
-  it("defaults automatic updates to enabled when the file is missing or invalid", async () => {
+  // Asserts the fallback path — missing or malformed file falls back to the
+  // build's default — not what that default is. A build that ships with
+  // automatic updates off (one pointed at a feed it must not follow, say) is
+  // a supported configuration, and pinning the literal here would make this
+  // the test that breaks for it.
+  it("falls back to the build's default when the file is missing or invalid", async () => {
     const missingPath = await makePreferencesPath();
     const invalidPath = await makePreferencesPath();
     await writeFile(invalidPath, JSON.stringify({ automaticUpdates: "false" }));
 
     await expect(loadUpdaterPreferences(missingPath)).resolves.toEqual({
-      automaticUpdates: true,
+      ...DEFAULT_UPDATER_PREFERENCES,
     });
     await expect(loadUpdaterPreferences(invalidPath)).resolves.toEqual({
-      automaticUpdates: true,
+      ...DEFAULT_UPDATER_PREFERENCES,
     });
   });
 
