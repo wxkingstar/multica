@@ -6,11 +6,12 @@ import { Card, CardContent } from "@multica/ui/components/ui/card";
 import { CODE_LIGATURE_CLASS } from "@multica/ui/lib/code-style";
 import { cn } from "@multica/ui/lib/utils";
 import { copyText } from "@multica/ui/lib/clipboard";
+import { useConfigStore } from "@multica/core/config";
 import { useT } from "../../i18n";
+import { setupCommand } from "./self-host-commands";
 
 const INSTALL_CMD =
   "curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash";
-const SETUP_CMD = "multica setup";
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useT("onboarding");
@@ -63,15 +64,17 @@ function Step({ n, label, cmd }: { n: number; label: string; cmd: string }) {
 }
 
 /**
- * CLI install instructions — two copy-and-run commands. Hardcoded because
- * there's nothing environmental to infer: step 1 is the public install
- * script, step 2 is the cloud `multica setup` which the CLI itself knows
- * the endpoints for. Local development tests a self-host variant by
- * typing the extended command directly in the terminal; no need to
- * thread env vars through React.
+ * CLI install instructions — two copy-and-run commands. Step 1 is the public
+ * install script. Step 2 is derived from the server's own daemon endpoints
+ * rather than hardcoded: a bare `multica setup` configures Multica Cloud, so
+ * on a self-hosted deployment it would quietly point the new daemon at the
+ * wrong server. See ./self-host-commands.ts.
  */
 export function CliInstallInstructions() {
   const { t } = useT("onboarding");
+  const daemonServerUrl = useConfigStore((s) => s.daemonServerUrl);
+  const daemonAppUrl = useConfigStore((s) => s.daemonAppUrl);
+  const setupCmd = setupCommand(daemonServerUrl, daemonAppUrl);
   return (
     <Card className="w-full">
       <CardContent className="space-y-4 pt-4">
@@ -79,7 +82,7 @@ export function CliInstallInstructions() {
           {t(($) => $.cli_install.intro)}
         </p>
         <Step n={1} label={t(($) => $.cli_install.step1_label)} cmd={INSTALL_CMD} />
-        <Step n={2} label={t(($) => $.cli_install.step2_label)} cmd={SETUP_CMD} />
+        <Step n={2} label={t(($) => $.cli_install.step2_label)} cmd={setupCmd} />
       </CardContent>
     </Card>
   );
