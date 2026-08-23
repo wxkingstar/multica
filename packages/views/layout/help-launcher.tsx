@@ -25,11 +25,13 @@ import { useT } from "../i18n";
 
 const DOCS_URL = "https://multica.ai/docs";
 const CHANGELOG_URL = "https://multica.ai/changelog";
-// Absolute, including on self-hosted deployments: the installers we ship are
-// the same binaries either way, and the desktop client can point at a
-// self-hosted backend once installed. A self-host-relative /download would
-// only serve a copy of this page that still has to reach our release assets.
-const DOWNLOAD_URL = "https://multica.ai/download";
+// Relative, so a deployment owns its own answer to "where do I get the app".
+// The managed cloud serves the bundled /download page here exactly as before;
+// a self-host that publishes its own builds points DOWNLOAD_REDIRECT_URL at
+// them (apps/web/config/download-redirect.ts) and this entry follows. Sending
+// self-hosted users to the cloud page instead would hand them installers that
+// default to a different server than the one they are signed in to.
+const DOWNLOAD_URL = "/download";
 
 export function HelpLauncher() {
   const { t } = useT("layout");
