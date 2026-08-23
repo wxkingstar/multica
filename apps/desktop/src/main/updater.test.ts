@@ -56,7 +56,10 @@ import {
   configureMacX64UpdateChannel,
   setupAutoUpdater,
 } from "./updater";
-import { updaterPreferencesPath } from "./updater-preferences";
+import {
+  DEFAULT_UPDATER_PREFERENCES,
+  updaterPreferencesPath,
+} from "./updater-preferences";
 
 describe("macOS x64 update channel", () => {
   it("does not touch established architecture paths", () => {
@@ -175,15 +178,21 @@ describe("setupAutoUpdater", () => {
     rmSync(ctx.userDataPath, { recursive: true, force: true });
   });
 
-  it("enables automatic background updates by default", async () => {
+  // Same rule as updater-preferences.test.ts: the behaviour under test is
+  // "with no preference file, the build default decides", not which way that
+  // default points. The scheduling assertion follows the default rather than
+  // asserting a fixed one.
+  it("follows the build default when no preference file exists", async () => {
     setupAutoUpdater(() => null);
 
     await expect(invokeIpc("updater:get-preferences")).resolves.toEqual({
-      automaticUpdates: true,
+      ...DEFAULT_UPDATER_PREFERENCES,
     });
 
     await vi.advanceTimersByTimeAsync(5_000);
-    expect(ctx.checkForUpdates).toHaveBeenCalledTimes(1);
+    expect(ctx.checkForUpdates).toHaveBeenCalledTimes(
+      DEFAULT_UPDATER_PREFERENCES.automaticUpdates ? 1 : 0,
+    );
   });
 
   it("skips startup and periodic checks when automatic updates are disabled", async () => {
