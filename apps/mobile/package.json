@@ -7,6 +7,7 @@
     "dev": "expo start",
     "dev:staging": "dotenv -e .env.staging -- cross-env APP_ENV=staging expo start",
     "dev:prod": "dotenv -e .env.production -- cross-env APP_ENV=production expo start",
+    "prebuild:prod": "dotenv -e .env.production -- cross-env APP_ENV=production expo prebuild -p ios --clean --no-install",
     "ios": "./scripts/ios-run.sh",
     "ios:staging": "dotenv -e .env.staging -- cross-env APP_ENV=staging ./scripts/ios-run.sh",
     "ios:prod": "dotenv -e .env.production -- cross-env APP_ENV=production ./scripts/ios-run.sh",

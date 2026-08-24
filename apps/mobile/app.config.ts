@@ -22,7 +22,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ? "Multica (Staging)"
         : "Multica (Dev)",
     slug: "multica-mobile",
-    version: "0.1.0",
+    // Marketing version (CFBundleShortVersionString). Env-driven for the same
+    // reason bundleIdentifier is: a deployment that ships its own builds runs
+    // its own release cadence, and App Store Connect rejects an upload whose
+    // version/build pair it has already seen. Unset keeps the repo default.
+    version: process.env.EXPO_APP_VERSION ?? "0.1.0",
     orientation: "portrait",
     userInterfaceStyle: "automatic",
     scheme: "multica",
@@ -34,6 +38,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Expo keeps the top-level portrait policy for iPhone while adding all
       // iPad orientations required for multitasking when tablet support is on.
       supportsTablet: true,
+      // CFBundleVersion. Must strictly increase for every upload of a given
+      // version — App Store Connect rejects a repeat. Kept separate from
+      // `version` so a rebuild of the same release can bump only this.
+      buildNumber: process.env.EXPO_IOS_BUILD_NUMBER ?? "1",
       // Pins DEVELOPMENT_TEAM on every prebuild. Leaving it unset is the normal
       // path — `expo run:ios` then resolves a signing identity from the Keychain
       // itself, which is right when the Apple ID owns exactly one team. With
