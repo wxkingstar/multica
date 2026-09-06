@@ -35,6 +35,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // iOS icon size from this single PNG.
     icon: "./assets/icon.png",
     ios: {
+      // Declare up front that the app uses no non-exempt encryption, so every
+      // upload skips App Store Connect's "Missing Compliance" gate. Without
+      // this key the build lands in TestFlight and simply refuses to
+      // distribute until someone answers the encryption questions by hand in
+      // the web UI — the build looks uploaded but testers never receive it.
+      // Multica's transport is plain HTTPS, which is exempt under the
+      // standard "only uses encryption exempt from export requirements"
+      // category; there is no bundled crypto beyond the OS TLS stack.
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
       // Expo keeps the top-level portrait policy for iPhone while adding all
       // iPad orientations required for multitasking when tablet support is on.
       supportsTablet: true,
